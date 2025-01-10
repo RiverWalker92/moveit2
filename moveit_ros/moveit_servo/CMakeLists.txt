@@ -85,6 +85,10 @@ add_executable(servo_keyboard_input demos/servo_keyboard_input.cpp)
 target_include_directories(servo_keyboard_input PUBLIC include)
 ament_target_dependencies(servo_keyboard_input ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+add_executable(yumi_servo_keyboard_input demos/yumi_servo_keyboard_input.cpp)
+target_include_directories(yumi_servo_keyboard_input PUBLIC include)
+ament_target_dependencies(yumi_servo_keyboard_input ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
 # ##############################################################################
 # Install ##
 # ##############################################################################
@@ -101,7 +105,7 @@ install(
 
 # Install Binaries
 install(
-  TARGETS demo_joint_jog demo_twist demo_pose servo_node servo_keyboard_input
+  TARGETS demo_joint_jog demo_twist demo_pose servo_node servo_keyboard_input yumi_servo_keyboard_input
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/moveit_servo)

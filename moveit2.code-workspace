@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"C_Cpp.default.browse.path": [
+			"/opt/ros/jazzy/include"
+		]
+	}
+}

@@ -41,6 +41,7 @@
 #include <moveit_servo/utils/command.hpp>
 #include <moveit_servo/utils/common.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/logger.hpp>
 #include <moveit/utils/logger.hpp>
 
 // Disable -Wold-style-cast because all _THROTTLE macros trigger this
@@ -48,6 +49,10 @@
 
 namespace
 {
+rclcpp::Logger getLogger()
+{
+  return moveit::getLogger("moveit.core.robot_model");
+}
 constexpr double ROBOT_STATE_WAIT_TIME = 5.0;  // seconds
 constexpr double STOPPED_VELOCITY_EPS = 1e-4;
 }  // namespace
@@ -495,6 +500,7 @@ KinematicState Servo::getNextJointState(const moveit::core::RobotStatePtr& robot
   if (collision_velocity_scale_ > 0 && collision_velocity_scale_ < 1)
   {
     servo_status_ = StatusCode::DECELERATE_FOR_COLLISION;
+
   }
   else if (collision_velocity_scale_ == 0)
   {
@@ -540,6 +546,10 @@ KinematicState Servo::getNextJointState(const moveit::core::RobotStatePtr& robot
       servo_status_ = StatusCode::JOINT_BOUND;
       target_state = haltJoints(joint_variables_to_halt, current_state, target_state);
     }
+  }
+
+  if (servo_status_ != StatusCode::NO_WARNING){
+    RCLCPP_WARN_STREAM(getLogger(), SERVO_STATUS_CODE_MAP.at(servo_status_));
   }
 
   // Apply smoothing to the positions if a smoother was provided.

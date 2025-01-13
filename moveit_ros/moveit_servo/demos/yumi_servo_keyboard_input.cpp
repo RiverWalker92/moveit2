@@ -41,6 +41,7 @@
 #include <chrono>
 #include <control_msgs/msg/joint_jog.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <moveit_msgs/srv/servo_command_type.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <signal.h>
@@ -48,7 +49,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-// Define used keys
+// Define used keys with ASCII codes
 namespace
 {
 constexpr int8_t KEYCODE_RIGHT = 0x43;
@@ -69,7 +70,12 @@ constexpr int8_t KEYCODE_R = 0x72;
 constexpr int8_t KEYCODE_J = 0x6A;
 constexpr int8_t KEYCODE_T = 0x74;
 constexpr int8_t KEYCODE_W = 0x77;
+constexpr int8_t KEYCODE_A = 0x61;
+constexpr int8_t KEYCODE_S = 0x73;
+constexpr int8_t KEYCODE_D = 0x64;
+constexpr int8_t KEYCODE_O = 0x6F;
 constexpr int8_t KEYCODE_E = 0x65;
+constexpr int8_t KEYCODE_P = 0x70;
 }  // namespace
 
 // Some constants used in the Servo Teleop demo
@@ -77,6 +83,7 @@ namespace
 {
 const std::string TWIST_TOPIC = "/servo_node/delta_twist_cmds";
 const std::string JOINT_TOPIC = "/servo_node/delta_joint_cmds";
+const std::string POSE_TOPIC = "/servo_node/pose_target_cmds";
 const size_t ROS_QUEUE_SIZE = 10;
 const std::string PLANNING_FRAME_ID = "yumi_base_link";
 const std::string EE_FRAME_ID = "yumi_instrument_link_right";
@@ -130,19 +137,23 @@ private:
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<control_msgs::msg::JointJog>::SharedPtr joint_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
   rclcpp::Client<moveit_msgs::srv::ServoCommandType>::SharedPtr switch_input_;
 
   std::shared_ptr<moveit_msgs::srv::ServoCommandType::Request> request_;
   double joint_vel_cmd_;
+  double twist_vel_cmd_;
+  double pose_vel_cmd_;
   std::string command_frame_id_;
 };
 
-KeyboardServo::KeyboardServo() : joint_vel_cmd_(1.0), command_frame_id_{ "yumi_base_link" }
+KeyboardServo::KeyboardServo() : joint_vel_cmd_(10.0), twist_vel_cmd_(10.0), pose_vel_cmd_(10.0), command_frame_id_{ "yumi_base_link" }
 {
   nh_ = rclcpp::Node::make_shared("servo_keyboard_input");
 
   twist_pub_ = nh_->create_publisher<geometry_msgs::msg::TwistStamped>(TWIST_TOPIC, ROS_QUEUE_SIZE);
   joint_pub_ = nh_->create_publisher<control_msgs::msg::JointJog>(JOINT_TOPIC, ROS_QUEUE_SIZE);
+  pose_pub_ = nh_->create_publisher<geometry_msgs::msg::PoseStamped>(POSE_TOPIC, ROS_QUEUE_SIZE);
 
   // Client for switching input types
   switch_input_ = nh_->create_client<moveit_msgs::srv::ServoCommandType>("servo_node/switch_command_type");
@@ -185,6 +196,7 @@ int KeyboardServo::keyLoop()
   char c;
   bool publish_twist = false;
   bool publish_joint = false;
+  bool publish_pose = false;
 
   std::thread{ [this]() { return spin(); } }.detach();
 
@@ -195,7 +207,8 @@ int KeyboardServo::keyLoop()
   puts("Use 1|2|3|4|5|6|7 keys to joint jog. 'r' to reverse the direction of jogging.");
   puts("Use 'j' to select joint jog. ");
   puts("Use 't' to select twist ");
-  puts("Use 'w' and 'e' to switch between sending command in planning frame or end effector frame");
+  puts("Use 'p' to select pose ");
+  puts("Use 'o' and 'e' to switch between sending command in planning frame or end effector frame");
   puts("'Q' to quit.");
 
   for (;;)
@@ -216,6 +229,7 @@ int KeyboardServo::keyLoop()
     // // Create the messages we might publish
     auto twist_msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
     auto joint_msg = std::make_unique<control_msgs::msg::JointJog>();
+    auto pose_msg = std::make_unique<geometry_msgs::msg::PoseStamped>();
 
     joint_msg->joint_names.resize(7);
     joint_msg->joint_names = { "yumi_joint_1_right", "yumi_joint_2_right", "yumi_joint_3_right", "yumi_joint_4_right",
@@ -228,32 +242,32 @@ int KeyboardServo::keyLoop()
     {
       case KEYCODE_LEFT:
         RCLCPP_DEBUG(nh_->get_logger(), "LEFT");
-        twist_msg->twist.linear.y = -0.5;
+        twist_msg->twist.linear.y = -twist_vel_cmd_;
         publish_twist = true;
         break;
       case KEYCODE_RIGHT:
         RCLCPP_DEBUG(nh_->get_logger(), "RIGHT");
-        twist_msg->twist.linear.y = 0.5;
+        twist_msg->twist.linear.y = twist_vel_cmd_;
         publish_twist = true;
         break;
       case KEYCODE_UP:
         RCLCPP_DEBUG(nh_->get_logger(), "UP");
-        twist_msg->twist.linear.x = 0.5;
+        twist_msg->twist.linear.x = twist_vel_cmd_;
         publish_twist = true;
         break;
       case KEYCODE_DOWN:
         RCLCPP_DEBUG(nh_->get_logger(), "DOWN");
-        twist_msg->twist.linear.x = -0.5;
+        twist_msg->twist.linear.x = -twist_vel_cmd_;
         publish_twist = true;
         break;
       case KEYCODE_PERIOD:
         RCLCPP_DEBUG(nh_->get_logger(), "PERIOD");
-        twist_msg->twist.linear.z = -0.5;
+        twist_msg->twist.linear.z = -twist_vel_cmd_;
         publish_twist = true;
         break;
       case KEYCODE_SEMICOLON:
         RCLCPP_DEBUG(nh_->get_logger(), "SEMICOLON");
-        twist_msg->twist.linear.z = 0.5;
+        twist_msg->twist.linear.z = twist_vel_cmd_;
         publish_twist = true;
         break;
       case KEYCODE_1:
@@ -295,6 +309,26 @@ int KeyboardServo::keyLoop()
         RCLCPP_DEBUG(nh_->get_logger(), "r");
         joint_vel_cmd_ *= -1;
         break;
+      case KEYCODE_W:
+        RCLCPP_DEBUG(nh_->get_logger(), "w");
+        pose_msg->pose.position.x = pose_vel_cmd_;
+        publish_pose = true;
+        break;
+      case KEYCODE_S:
+        RCLCPP_DEBUG(nh_->get_logger(), "s");
+        pose_msg->pose.position.x = -pose_vel_cmd_;
+        publish_pose = true;
+        break;
+      case KEYCODE_A:
+        RCLCPP_DEBUG(nh_->get_logger(), "a");
+        pose_msg->pose.position.y = pose_vel_cmd_;
+        publish_pose = true;
+        break;
+      case KEYCODE_D:
+        RCLCPP_DEBUG(nh_->get_logger(), "d");
+        pose_msg->pose.position.y = -pose_vel_cmd_;
+        publish_pose = true;
+        break;
       case KEYCODE_J:
         RCLCPP_DEBUG(nh_->get_logger(), "j");
         request_ = std::make_shared<moveit_msgs::srv::ServoCommandType::Request>();
@@ -329,8 +363,25 @@ int KeyboardServo::keyLoop()
           }
         }
         break;
-      case KEYCODE_W:
-        RCLCPP_DEBUG(nh_->get_logger(), "w");
+        case KEYCODE_P:
+        RCLCPP_DEBUG(nh_->get_logger(), "P");
+        request_ = std::make_shared<moveit_msgs::srv::ServoCommandType::Request>();
+        request_->command_type = moveit_msgs::srv::ServoCommandType::Request::POSE;
+        if (switch_input_->wait_for_service(std::chrono::seconds(1)))
+        {
+          auto result = switch_input_->async_send_request(request_);
+          if (result.get()->success)
+          {
+            RCLCPP_INFO_STREAM(nh_->get_logger(), "Switched to input type: Pose");
+          }
+          else
+          {
+            RCLCPP_WARN_STREAM(nh_->get_logger(), "Could not switch input to: Pose");
+          }
+        }
+        break;
+      case KEYCODE_O:
+        RCLCPP_DEBUG(nh_->get_logger(), "o");
         RCLCPP_INFO_STREAM(nh_->get_logger(), "Command frame set to: " << PLANNING_FRAME_ID);
         command_frame_id_ = PLANNING_FRAME_ID;
         break;
@@ -358,6 +409,12 @@ int KeyboardServo::keyLoop()
       joint_msg->header.frame_id = PLANNING_FRAME_ID;
       joint_pub_->publish(std::move(joint_msg));
       publish_joint = false;
+    }
+    else if(publish_pose){
+      pose_msg->header.stamp = nh_->now();
+      pose_msg->header.frame_id = command_frame_id_;
+      pose_pub_->publish(std::move(pose_msg));
+      publish_pose = false;
     }
   }
 

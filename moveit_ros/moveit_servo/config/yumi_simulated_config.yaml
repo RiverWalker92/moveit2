@@ -41,8 +41,8 @@ check_octomap_collisions: false  # Check collision against the octomap (if a 3D 
 move_group_name: "right_arm"  # Often 'manipulator' or 'arm'
 
 ## Configure handling of singularities and joint limits
-lower_singularity_threshold: 10.0  # Start decelerating when the condition number hits this (close to singularity)
-hard_stop_singularity_threshold: 30.0  # Stop when the condition number hits this
+lower_singularity_threshold: 100.0  # Start decelerating when the condition number hits this (close to singularity)
+hard_stop_singularity_threshold: 300.0  # Stop when the condition number hits this
 leaving_singularity_threshold_multiplier: 2.0  # Multiply the hard stop limit by this when leaving singularity (see https://github.com/moveit/moveit2/pull/620)
 # Added as a buffer to joint variable position bounds [in that joint variable's respective units].
 # Can be of size 1, which applies the margin to all joints, or the same size as the number of degrees of freedom of the active joint group.
@@ -52,6 +52,7 @@ joint_limit_margins: [0.12]
 ## Topic names
 cartesian_command_in_topic: ~/delta_twist_cmds  # Topic for incoming Cartesian twist commands
 joint_command_in_topic: ~/delta_joint_cmds  # Topic for incoming joint angle commands
+pose_command_in_topic: ~/pose_target_cmds  # Topic for incoming Cartesian pose commands
 joint_topic: /joint_states  # Get joint states from this tpoic
 status_topic: ~/status  # Publish status to this topic
 command_out_topic: /right_arm_controller/joint_trajectory  # Publish outgoing commands here
@@ -59,5 +60,5 @@ command_out_topic: /right_arm_controller/joint_trajectory  # Publish outgoing co
 ## Collision checking for the entire robot body
 check_collisions: true  # Check collisions?
 collision_check_rate: 10.0  # [Hz] Collision-checking can easily bog down a CPU if done too often.
-self_collision_proximity_threshold: 0.01  # Start decelerating when a self-collision is this far [m]
+self_collision_proximity_threshold: 0.001  # Start decelerating when a self-collision is this far [m]
 scene_collision_proximity_threshold: 0.02  # Start decelerating when a scene collision is this far [m]

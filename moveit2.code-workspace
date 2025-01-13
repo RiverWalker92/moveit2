@@ -6,7 +6,44 @@
 	],
 	"settings": {
 		"C_Cpp.default.browse.path": [
-			"/opt/ros/jazzy/include"
-		]
+			"/opt/ros/jazzy/include",
+			"/home/roel/ws_moveit/install"
+		],
+		"files.associations": {
+			"*.tcc": "cpp",
+			"cmath": "cpp",
+			"slist": "cpp",
+			"cholesky": "cpp",
+			"core": "cpp",
+			"eigenvalues": "cpp",
+			"geometry": "cpp",
+			"householder": "cpp",
+			"iterativelinearsolvers": "cpp",
+			"jacobi": "cpp",
+			"lu": "cpp",
+			"orderingmethods": "cpp",
+			"qr": "cpp",
+			"svd": "cpp",
+			"sparse": "cpp",
+			"sparsecholesky": "cpp",
+			"sparsecore": "cpp",
+			"sparselu": "cpp",
+			"sparseqr": "cpp",
+			"stdvector": "cpp",
+			"bitset": "cpp",
+			"forward_list": "cpp",
+			"list": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"format": "cpp",
+			"fstream": "cpp",
+			"istream": "cpp",
+			"mutex": "cpp",
+			"ostream": "cpp",
+			"streambuf": "cpp",
+			"functional": "cpp",
+			"regex": "cpp",
+			"valarray": "cpp"
+		}
 	}
 }

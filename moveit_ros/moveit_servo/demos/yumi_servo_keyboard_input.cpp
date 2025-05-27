@@ -139,6 +139,7 @@ private:
   rclcpp::Publisher<control_msgs::msg::JointJog>::SharedPtr joint_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
   rclcpp::Client<moveit_msgs::srv::ServoCommandType>::SharedPtr switch_input_;
+  rclcpp::Client<moveit_msgs::srv::ServoCommandType>::SharedPtr left_switch_input_;
 
   std::shared_ptr<moveit_msgs::srv::ServoCommandType::Request> request_;
   double joint_vel_cmd_;
@@ -157,6 +158,7 @@ KeyboardServo::KeyboardServo() : joint_vel_cmd_(10.0), twist_vel_cmd_(10.0), pos
 
   // Client for switching input types
   switch_input_ = nh_->create_client<moveit_msgs::srv::ServoCommandType>("servo_node/switch_command_type");
+  left_switch_input_ = nh_->create_client<moveit_msgs::srv::ServoCommandType>("left_servo_node/switch_command_type");
 }
 
 KeyboardReader input;
@@ -370,6 +372,20 @@ int KeyboardServo::keyLoop()
         if (switch_input_->wait_for_service(std::chrono::seconds(1)))
         {
           auto result = switch_input_->async_send_request(request_);
+          if (result.get()->success)
+          {
+            RCLCPP_INFO_STREAM(nh_->get_logger(), "Switched to input type: Pose");
+          }
+          else
+          {
+            RCLCPP_WARN_STREAM(nh_->get_logger(), "Could not switch input to: Pose");
+          }
+        }
+        request_ = std::make_shared<moveit_msgs::srv::ServoCommandType::Request>();
+        request_->command_type = moveit_msgs::srv::ServoCommandType::Request::POSE;
+        if (left_switch_input_->wait_for_service(std::chrono::seconds(1)))
+        {
+          auto result = left_switch_input_->async_send_request(request_);
           if (result.get()->success)
           {
             RCLCPP_INFO_STREAM(nh_->get_logger(), "Switched to input type: Pose");

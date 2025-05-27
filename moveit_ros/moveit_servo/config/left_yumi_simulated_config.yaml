@@ -52,10 +52,10 @@ joint_limit_margins: [0.12]
 ## Topic names
 cartesian_command_in_topic: ~/delta_twist_cmds  # Topic for incoming Cartesian twist commands
 joint_command_in_topic: ~/delta_joint_cmds  # Topic for incoming joint angle commands
-pose_command_in_topic: ~/right_pose_target_cmds  # Topic for incoming Cartesian pose commands
+pose_command_in_topic: ~/left_pose_target_cmds  # Topic for incoming Cartesian pose commands
 joint_topic: /joint_states  # Get joint states from this tpoic
 status_topic: ~/status  # Publish status to this topic
-command_out_topic: /right_arm_controller/joint_trajectory  # Publish outgoing commands here
+command_out_topic: /left_arm_controller/joint_trajectory  # Publish outgoing commands here
 
 ## Collision checking for the entire robot body
 check_collisions: true  # Check collisions?
